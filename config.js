@@ -8,6 +8,6 @@ const config = {
   ADMIN_KEY: process.env.ADMIN_KEY,
 };
 
-// # Add comment
+// # Add commentt
 
 module.exports = config;
