@@ -59,21 +59,38 @@ const gallerySchema = new mongoose.Schema({
   }
 });
 
+// In your models/Schema.js file
+
 const newsSchema = new mongoose.Schema({
   title: {
     type: String,
+    required: true,
+    maxlength: 100 // 100 words limit
+  },
+  location: {
+    type: String,
+    default: ''
+  },
+  date: {
+    type: Date,
     required: true
   },
-
   description: {
     type: String,
-    required: true
+    required: true,
+    maxlength: 500 // 500 words limit
   },
-
-  createdAt: {
-    type: Date,
-    default: Date.now
+  tags: {
+    type: String,
+    default: '',
+    maxlength: 80 // 80 words limit
+  },
+  imageUrl: {
+    type: String,
+    default: ''
   }
+}, {
+  timestamps: true
 });
 
 const Circular = mongoose.model('Circular', circularSchema);
