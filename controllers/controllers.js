@@ -26,31 +26,67 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+// ========================================== //
+// FILE FILTERS - Separate for different types
+// ========================================== //
+
+// 1. Image Filter (for Gallery & News)
+const imageFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only images are allowed'), false);
+  }
+};
+
+// 2. PDF Filter (for Circulars)
+const pdfFilter = (req, file, cb) => {
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only PDF files are allowed'), false);
+  }
+};
+
+// 3. Global Upload (Default - Image)
+const upload = multer({
   storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only images are allowed'));
-    }
-  }
+  fileFilter: imageFilter
+});
+
+// 4. PDF Upload (For Circulars only)
+const uploadPDF = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: pdfFilter
 });
 
 exports.upload = upload;
+exports.uploadPDF = uploadPDF;
 
 // ======================
-// Circular
+// Circular (PDF Only)
 // ======================
 
 exports.uploadCircular = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
+        success: false,
         message: 'PDF file is required'
+      });
+    }
+
+    // Extra validation
+    if (req.file.mimetype !== 'application/pdf') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only PDF files are allowed. Please upload a PDF file.'
       });
     }
 
@@ -202,7 +238,7 @@ exports.deleteVideo = async (req, res) => {
 };
 
 // ======================
-// Gallery
+// Gallery (Images Only - No PDF)
 // ======================
 
 exports.uploadGallery = async (req, res) => {
@@ -211,6 +247,14 @@ exports.uploadGallery = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Image file is required'
+      });
+    }
+
+    // Extra validation - ensure it's an image
+    if (!req.file.mimetype.startsWith('image/')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only image files are allowed. Please upload an image file.'
       });
     }
 
@@ -356,6 +400,13 @@ exports.uploadNews = async (req, res) => {
 
     // Add image if uploaded
     if (req.file) {
+      // Extra validation - ensure it's an image
+      if (!req.file.mimetype.startsWith('image/')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Only image files are allowed for news'
+        });
+      }
       newsData.imageUrl = `/uploads/${req.file.filename}`;
       console.log('Image saved at:', newsData.imageUrl);
     }
